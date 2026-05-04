@@ -3,22 +3,22 @@ name: GitHub Contribution Stats
 on:
   # Run automatically on the 1st of every month at 00:00 UTC
   schedule:
-    - cron: '0 0 1 * *'
+    - cron: "0 0 1 * *"
 
   # Allow manual triggering with explicit start/end dates (stdout only, no files written)
   workflow_dispatch:
     inputs:
       start_date:
-        description: 'Start date (YYYY-MM-DD)'
+        description: "Start date (YYYY-MM-DD)"
         required: true
         type: string
       end_date:
-        description: 'End date (YYYY-MM-DD)'
+        description: "End date (YYYY-MM-DD)"
         required: true
         type: string
 
 permissions:
-  contents: write   # needed to commit github-stats.yml and README.md
+  contents: write # needed to commit github-stats.yml and README.md
 
 jobs:
   collect-stats:
@@ -45,19 +45,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          START_DATE=$(date -d "$(date +%Y-%m-01) -1 month" +%Y-%m-%d)
+          END_DATE=$(date -d "$(date +%Y-%m-01) -1 day" +%Y-%m-%d)
+
           deno run --allow-all .github/scripts/collect-stats.ts \
+            --start-date="$START_DATE" \
+            --end-date="$END_DATE" \
             --output=github-stats.yml
 
-      - name: Commit and push updated files
-        if: github.event_name == 'schedule'
-        run: |
-          git config user.name  'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add github-stats.yml README.md
-          # Derive last month portably using Deno
-          LAST_MONTH=$(deno eval "const d=new Date();d.setDate(0);console.log(d.toISOString().slice(0,7))")
-          # Only commit when there are actual changes
-          git diff --staged --quiet || \
-            git commit -m "chore: update GitHub contribution stats for ${LAST_MONTH}"
-          git push
+          LAST_MONTH=$(date -d "$(date +%Y-%m-01) -1 month" +%Y-%m)
+          echo "LAST_MONTH=$LAST_MONTH" >> "$GITHUB_ENV"
 
+      - uses: peter-evans/create-pull-request@v7
+        if: github.event_name == 'schedule'
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: |
+            github-stats.yml
+            README.md
+          commit-message: "chore: update GitHub contribution stats for ${{ env.LAST_MONTH }}"
+          branch: "chore/github-stats-${{ env.LAST_MONTH }}"
+          delete-branch: true
+          title: "chore: update GitHub contribution stats for ${{ env.LAST_MONTH }}"
+          body: "Automated monthly update of GitHub contribution stats."
+          assignees: TechQuery

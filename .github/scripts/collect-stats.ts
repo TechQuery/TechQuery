@@ -9,8 +9,8 @@
  * Only repos where at least one stat is non-zero are kept.
  *
  * CLI arguments
- *   --start-date  YYYY-MM-DD  Start of range (default: first day of last month)
- *   --end-date    YYYY-MM-DD  End of range   (default: last day of last month)
+ *   --start-date  YYYY-MM-DD  Start of range (required)
+ *   --end-date    YYYY-MM-DD  End of range   (required)
  *   --output      path        YAML stats file to write; omit for stdout-only mode
  *
  * Environment variables (can be loaded from a .env file via dotenv)
@@ -19,7 +19,6 @@
 
 import 'npm:dotenv/config';
 import { $, argv, path } from 'npm:zx';
-import WebUtility from 'npm:web-utility';
 import { fileURLToPath } from 'node:url';
 
 import { gql, resolvePath, toISOTimestamp } from './utility.ts';
@@ -37,8 +36,6 @@ import {
   updateMarkdown,
   yieldReposInDateRange,
 } from './core.ts';
-
-const { changeDate, changeMonth, Day, formatDate, makeDateRange } = WebUtility;
 
 $.verbose = true;
 
@@ -61,17 +58,6 @@ const startArg = argv['start-date'] as string | undefined;
 const endArg = argv['end-date'] as string | undefined;
 const outputArg = argv.output as string | undefined;
 
-function getDateRange(): { start: string; end: string } {
-  if (startArg && endArg) return { start: startArg, end: endArg };
-  // Default: previous calendar month via web-utility makeDateRange
-  const lastMonthDate = changeMonth(new Date(), -1);
-  const monthStr = formatDate(lastMonthDate, 'YYYY-MM');
-  const [startDate, untilDate] = makeDateRange(monthStr);
-  const start = formatDate(startDate, 'YYYY-MM-DD');
-  const end = formatDate(changeDate(untilDate, Day, -1), 'YYYY-MM-DD');
-  return { start, end };
-}
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ViewerData {
@@ -83,8 +69,10 @@ interface ViewerData {
 
 // ── Main (top-level await) ────────────────────────────────────────────────────
 
-const { start, end } = getDateRange();
-console.log(`📅 Date range: ${start} → ${end}`);
+if (!startArg || !endArg)
+  throw new ReferenceError('Error: --start-date and --end-date are required');
+
+console.log(`📅 Date range: ${startArg} → ${endArg}`);
 
 // 1. Authenticated user + organisations
 const { viewer } = await gql<ViewerData>(
@@ -106,8 +94,8 @@ for (const owner of owners) {
   try {
     for await (const repo of yieldReposInDateRange(
       owner,
-      toISOTimestamp(start),
-      toISOTimestamp(end, true),
+      toISOTimestamp(startArg),
+      toISOTimestamp(endArg, true),
     ))
       allRepos.push(repo);
 
@@ -133,7 +121,7 @@ for (const repo of allRepos) {
   // Search API calls run sequentially to respect the rate limit
   let issues = 0;
   try {
-    issues = await countIssues(repo.nameWithOwner, login, start, end);
+    issues = await countIssues(repo.nameWithOwner, login, startArg, endArg);
   } catch (error) {
     console.warn(
       `    ⚠ Issues for ${repo.nameWithOwner}: ${(error as Error).message}`,
@@ -142,7 +130,7 @@ for (const repo of allRepos) {
 
   let prs = 0;
   try {
-    prs = await countPRs(repo.nameWithOwner, login, start, end);
+    prs = await countPRs(repo.nameWithOwner, login, startArg, endArg);
   } catch (error) {
     console.warn(
       `    ⚠ PRs for ${repo.nameWithOwner}: ${(error as Error).message}`,
@@ -151,7 +139,12 @@ for (const repo of allRepos) {
 
   let reviewedPRs = 0;
   try {
-    reviewedPRs = await countReviewedPRs(repo.nameWithOwner, login, start, end);
+    reviewedPRs = await countReviewedPRs(
+      repo.nameWithOwner,
+      login,
+      startArg,
+      endArg,
+    );
   } catch (error) {
     console.warn(
       `    ⚠ Reviewed PRs for ${repo.nameWithOwner}: ${(error as Error).message}`,
@@ -161,10 +154,10 @@ for (const repo of allRepos) {
   // Non-search calls run concurrently
   const [discussionsResult, reviewCommentsResult, commitsResult] =
     await Promise.allSettled([
-      countDiscussions(owner, name, login, start, end),
-      countReviewComments(owner, name, login, start, end),
+      countDiscussions(owner, name, login, startArg, endArg),
+      countReviewComments(owner, name, login, startArg, endArg),
       branch
-        ? countCommits(owner, name, branch, login, start, end)
+        ? countCommits(owner, name, branch, login, startArg, endArg)
         : Promise.resolve(0),
     ]);
 
