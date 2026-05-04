@@ -16,8 +16,9 @@
 
 - 📄 Know about my experiences [https://tech-query.me/resume.html](https://tech-query.me/resume.html)
 
-<h3 align="left">Connect with me:</h3>
-<p align="left"><a href="https://codepen.io/techquery" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/codepen.svg" alt="codepen" height="30" width="40" /></a> <a href="https://twitter.com/techquery_fcc" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/twitter.svg" alt="twitter" height="30" width="40" /></a> <a href="https://linkedin.com/in/techquery" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="linkedin" height="30" width="40" /></a> <a href="https://codesandbox.com/techquery" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/codesandbox.svg" alt="codesandbox" height="30" width="40" /></a> <a href="https://tech-query.me/atom.xml" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/rss.svg" alt="rss" height="30" width="40" /></a></p>
+### Connect with me
+
+[![codepen](https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/codepen.svg)](https://codepen.io/techquery) [![twitter](https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/twitter.svg)](https://twitter.com/techquery_fcc) [![linkedin](https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg)](https://linkedin.com/in/techquery) [![codesandbox](https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/codesandbox.svg)](https://codesandbox.com/techquery) [![rss](https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/rss.svg)](https://tech-query.me/atom.xml)
 
 <h3 align="left">Languages and Tools:</h3>
 <p align="left">
