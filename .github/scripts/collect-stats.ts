@@ -3,9 +3,10 @@
 /**
  * GitHub Contribution Stats Collector
  *
- * Finds repos created by the authenticated user and their organisations
+ * Finds public repos created by the authenticated user and their organisations
  * during a date range, then counts their issues, discussions, pull requests
- * and main-branch commits in those repos.
+ * and main-branch commits in those repos.  Only repos where at least one stat
+ * is non-zero are kept.
  *
  * CLI arguments
  *   --start-date  YYYY-MM-DD  Start of range (default: first day of last month)
@@ -19,7 +20,8 @@
 import 'npm:dotenv/config';
 import { $, argv } from 'npm:zx';
 import { parse as parseYaml, stringify as stringifyYaml } from 'jsr:@std/yaml';
-import { sleep } from 'npm:web-utility';
+import { buildURLData, sleep } from 'npm:web-utility';
+import { readFile, writeFile } from 'node:fs/promises';
 
 $.verbose = true;
 
@@ -27,7 +29,7 @@ $.verbose = true;
 
 globalThis.addEventListener('unhandledrejection', ({ reason }) => {
   console.error('Unhandled rejection:', reason);
-  Deno.exit(1);
+  process.exit(1);
 });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -45,6 +47,7 @@ interface RepoStats {
 interface RepoNode {
   nameWithOwner: string;
   createdAt: string;
+  isPrivate: boolean;
   defaultBranchRef: { name: string } | null;
 }
 
@@ -115,6 +118,7 @@ const REPOS_QUERY = `
         nodes {
           nameWithOwner
           createdAt
+          isPrivate
           defaultBranchRef { name }
         }
       }
@@ -123,15 +127,14 @@ const REPOS_QUERY = `
 `;
 
 /**
- * Returns repos owned by `owner` whose createdAt falls within [since, until].
- * Both timestamps are ISO-8601 strings (e.g. "2024-01-01T00:00:00Z").
+ * Async generator that yields public repos owned by `owner` whose createdAt
+ * falls within [since, until].  Both timestamps are ISO-8601 strings.
  */
-async function getReposInDateRange(
+async function* yieldReposInDateRange(
   owner: string,
   since: string,
   until: string,
-): Promise<RepoNode[]> {
-  const repos: RepoNode[] = [];
+): AsyncGenerator<RepoNode> {
   let cursor: string | null = null;
   const sinceDate = new Date(since);
   const untilDate = new Date(until);
@@ -156,52 +159,40 @@ async function getReposInDateRange(
       const created = new Date(repo.createdAt);
       if (created > untilDate) continue; // newer than range, skip
       if (created < sinceDate) { pastRange = true; break; } // older than range, stop
-      repos.push(repo);
+      if (!repo.isPrivate) yield repo; // only yield public repos
     }
 
     if (pastRange || !pageInfo.hasNextPage) break;
     cursor = pageInfo.endCursor;
   }
-
-  return repos;
 }
 
 // ── Contribution counters ─────────────────────────────────────────────────────
 
-/** Count issues authored by `login` in `repo` (nameWithOwner) during the period. */
+/** Count issues (all states) authored by `login` in `repo` (nameWithOwner) during the period. */
 async function countIssues(
   repo: string,
   login: string,
   start: string,
   end: string,
 ): Promise<number> {
-  try {
-    const data = await ghSearch<{ total_count: number }>(
-      `/search/issues?q=repo:${repo}+is:issue+author:${login}+created:${start}..${end}&per_page=1`,
-    );
-    return data.total_count;
-  } catch (e) {
-    console.warn(`    ⚠ Issues for ${repo}: ${(e as Error).message}`);
-    return 0;
-  }
+  const data = await ghSearch<{ total_count: number }>(
+    `/search/issues?q=repo:${repo}+is:issue+author:${login}+created:${start}..${end}&per_page=1`,
+  );
+  return data.total_count;
 }
 
-/** Count pull-requests authored by `login` in `repo` during the period. */
+/** Count pull-requests (all states) authored by `login` in `repo` during the period. */
 async function countPRs(
   repo: string,
   login: string,
   start: string,
   end: string,
 ): Promise<number> {
-  try {
-    const data = await ghSearch<{ total_count: number }>(
-      `/search/issues?q=repo:${repo}+is:pr+author:${login}+created:${start}..${end}&per_page=1`,
-    );
-    return data.total_count;
-  } catch (e) {
-    console.warn(`    ⚠ PRs for ${repo}: ${(e as Error).message}`);
-    return 0;
-  }
+  const data = await ghSearch<{ total_count: number }>(
+    `/search/issues?q=repo:${repo}+is:pr+author:${login}+created:${start}..${end}&per_page=1`,
+  );
+  return data.total_count;
 }
 
 const DISCUSSIONS_QUERY = `
@@ -230,44 +221,39 @@ async function countDiscussions(
   since: string,
   until: string,
 ): Promise<number> {
-  try {
-    let total = 0;
-    let cursor: string | null = null;
-    const sinceDate = new Date(toISOTimestamp(since));
-    const untilDate = new Date(toISOTimestamp(until, true));
+  let total = 0;
+  let cursor: string | null = null;
+  const sinceDate = new Date(toISOTimestamp(since));
+  const untilDate = new Date(toISOTimestamp(until, true));
 
-    while (true) {
-      const args = ['-f', `owner=${owner}`, '-f', `name=${name}`];
-      if (cursor) args.push('-f', `after=${cursor}`);
+  while (true) {
+    const args = ['-f', `owner=${owner}`, '-f', `name=${name}`];
+    if (cursor) args.push('-f', `after=${cursor}`);
 
-      const data = await gql<{
-        repository: {
-          discussions: {
-            pageInfo: { hasNextPage: boolean; endCursor: string };
-            nodes: { author: { login: string } | null; createdAt: string }[];
-          };
+    const data = await gql<{
+      repository: {
+        discussions: {
+          pageInfo: { hasNextPage: boolean; endCursor: string };
+          nodes: { author: { login: string } | null; createdAt: string }[];
         };
-      }>(DISCUSSIONS_QUERY, args);
+      };
+    }>(DISCUSSIONS_QUERY, args);
 
-      const { nodes, pageInfo } = data.repository.discussions;
-      let pastRange = false;
+    const { nodes, pageInfo } = data.repository.discussions;
+    let pastRange = false;
 
-      for (const d of nodes) {
-        const created = new Date(d.createdAt);
-        if (created > untilDate) continue;
-        if (created < sinceDate) { pastRange = true; break; }
-        if (d.author?.login === login) total++;
-      }
-
-      if (pastRange || !pageInfo.hasNextPage) break;
-      cursor = pageInfo.endCursor;
+    for (const d of nodes) {
+      const created = new Date(d.createdAt);
+      if (created > untilDate) continue;
+      if (created < sinceDate) { pastRange = true; break; }
+      if (d.author?.login === login) total++;
     }
 
-    return total;
-  } catch (e) {
-    console.warn(`    ⚠ Discussions for ${owner}/${name}: ${(e as Error).message}`);
-    return 0;
+    if (pastRange || !pageInfo.hasNextPage) break;
+    cursor = pageInfo.endCursor;
   }
+
+  return total;
 }
 
 /** Count commits by `login` on `branch` in `owner/name` during the period. */
@@ -279,24 +265,24 @@ async function countCommits(
   start: string,
   end: string,
 ): Promise<number> {
-  try {
-    const path =
-      `/repos/${owner}/${name}/commits` +
-      `?sha=${branch}&author=${login}` +
-      `&since=${toISOTimestamp(start)}&until=${toISOTimestamp(end, true)}&per_page=100`;
-    const result = await $`gh api --paginate ${path} --jq '.[].sha'`;
-    return result.stdout.trim().split('\n').filter(Boolean).length;
-  } catch (e) {
-    console.warn(`    ⚠ Commits for ${owner}/${name}: ${(e as Error).message}`);
-    return 0;
-  }
+  const path =
+    `/repos/${owner}/${name}/commits?` +
+    buildURLData({
+      sha: branch,
+      author: login,
+      since: toISOTimestamp(start),
+      until: toISOTimestamp(end, true),
+      per_page: 100,
+    });
+  const result = await $`gh api --paginate ${path} --jq '.[].sha'`;
+  return result.stdout.trim().split('\n').filter(Boolean).length;
 }
 
 // ── YAML persistence ──────────────────────────────────────────────────────────
 
 async function loadStats(filePath: string): Promise<RepoStats[]> {
   try {
-    const content = await Deno.readTextFile(filePath);
+    const content = await readFile(filePath, 'utf8');
     return (parseYaml(content) as RepoStats[]) ?? [];
   } catch {
     return [];
@@ -304,14 +290,14 @@ async function loadStats(filePath: string): Promise<RepoStats[]> {
 }
 
 async function saveStats(filePath: string, stats: RepoStats[]): Promise<void> {
-  await Deno.writeTextFile(filePath, stringifyYaml(stats));
+  await writeFile(filePath, stringifyYaml(stats));
   console.log(`✅ Saved stats to ${filePath}`);
 }
 
 // ── README update ─────────────────────────────────────────────────────────────
 
 /**
- * Builds the README contribution section from a flat array of repo stats.
+ * Generator that yields the lines of the README contribution section.
  *
  * Structure:
  *   ## GitHub 贡献统计          ← fixed H2
@@ -319,12 +305,12 @@ async function saveStats(filePath: string, stats: RepoStats[]): Promise<void> {
  *   ### YYYY                   ← H3 per year (collapsed)
  *   <details><summary>YYYY-MM</summary>
  *   #### YYYY-MM               ← H4 per month (collapsed)
- *   1. some-repo
+ *   1. [org/repo](https://github.com/org/repo)
  *       - issues: 3
  *   </details>
  *   </details>
  */
-function buildReadmeSection(entries: RepoStats[]): string {
+function* buildReadmeSectionLines(entries: RepoStats[]): Generator<string> {
   // Group entries by month (YYYY-MM)
   const byMonth = new Map<string, RepoStats[]>();
   for (const entry of entries) {
@@ -343,35 +329,38 @@ function buildReadmeSection(entries: RepoStats[]): string {
     byYear.set(year, list);
   }
 
-  let md = `${README_HEADING}\n`;
+  yield `${README_HEADING}\n`;
 
   for (const year of [...byYear.keys()].sort().reverse()) {
-    md += `\n<details><summary>${year}</summary>\n\n### ${year}\n`;
+    yield `\n<details><summary>${year}</summary>\n\n### ${year}\n`;
 
     for (const month of (byYear.get(year) ?? []).sort().reverse()) {
-      md += `\n<details><summary>${month}</summary>\n\n#### ${month}\n\n`;
+      yield `\n<details><summary>${month}</summary>\n\n#### ${month}\n\n`;
 
-      const repos = byMonth.get(month) ?? [];
-      repos.forEach((repo, i) => {
-        const shortName = repo.name.split('/').at(-1)!;
-        md += `${i + 1}. ${shortName}\n`;
-        md += `    - issues: ${repo.issues}\n`;
-        md += `    - discussions: ${repo.discussions}\n`;
-        md += `    - pull_requests: ${repo.pull_requests}\n`;
-        md += `    - commits: ${repo.commits}\n`;
-      });
+      let i = 0;
+      for (const repo of (byMonth.get(month) ?? [])) {
+        i++;
+        yield `${i}. [${repo.name}](https://github.com/${repo.name})
+    - issues: ${repo.issues}
+    - discussions: ${repo.discussions}
+    - pull_requests: ${repo.pull_requests}
+    - commits: ${repo.commits}
+`;
+      }
 
-      md += `\n</details>\n`;
+      yield `\n</details>\n`;
     }
 
-    md += `\n</details>\n`;
+    yield `\n</details>\n`;
   }
+}
 
-  return md;
+function buildReadmeSection(entries: RepoStats[]): string {
+  return [...buildReadmeSectionLines(entries)].join('');
 }
 
 async function updateReadme(entries: RepoStats[]): Promise<void> {
-  let readme = await Deno.readTextFile(README_FILE);
+  let readme = await readFile(README_FILE, 'utf8');
   const section = buildReadmeSection(entries);
 
   const idx = readme.indexOf(README_HEADING);
@@ -380,7 +369,7 @@ async function updateReadme(entries: RepoStats[]): Promise<void> {
       ? readme.slice(0, idx) + section
       : readme.trimEnd() + '\n\n' + section;
 
-  await Deno.writeTextFile(README_FILE, readme);
+  await writeFile(README_FILE, readme);
   console.log(`✅ Updated ${README_FILE}`);
 }
 
@@ -392,7 +381,7 @@ console.log(`📅 Date range: ${start} → ${end}`);
 // 1. Authenticated user + organisations
 const viewerData = await gql<{
   viewer: { login: string; organizations: { nodes: { login: string }[] } };
-}>(`{ viewer { login organizations(first: 30) { nodes { login } } } }`);
+}>(`{ viewer { login organizations(first: 100) { nodes { login } } } }`);
 
 const login = viewerData.viewer.login;
 const orgs = (viewerData.viewer.organizations?.nodes ?? []).map((o) => o.login);
@@ -400,28 +389,29 @@ const orgs = (viewerData.viewer.organizations?.nodes ?? []).map((o) => o.login);
 console.log(`👤 User: ${login}`);
 if (orgs.length) console.log(`🏢 Orgs: ${orgs.join(', ')}`);
 
-// 2. Collect repos created during the period
+// 2. Collect public repos created during the period
 const owners = [login, ...orgs];
 const allRepos: RepoNode[] = [];
 
 for (const owner of owners) {
   console.log(`\n🔍 Repos for ${owner} …`);
   try {
-    const repos = await getReposInDateRange(
+    for await (const repo of yieldReposInDateRange(
       owner,
       toISOTimestamp(start),
       toISOTimestamp(end, true),
-    );
-    console.log(`   ${repos.length} repo(s) created in range`);
-    allRepos.push(...repos);
+    )) {
+      allRepos.push(repo);
+    }
+    console.log(`   collected so far: ${allRepos.length}`);
   } catch (e) {
     console.warn(`   ⚠ Could not access repos for ${owner}: ${(e as Error).message}`);
   }
 }
 
-console.log(`\n📦 Total new repos: ${allRepos.length}`);
+console.log(`\n📦 Total new public repos: ${allRepos.length}`);
 
-// 3. Count contributions in each repo
+// 3. Count contributions in each repo; skip repos with all-zero stats
 const newEntries: RepoStats[] = [];
 
 for (const repo of allRepos) {
@@ -429,18 +419,41 @@ for (const repo of allRepos) {
   const branch = repo.defaultBranchRef?.name ?? '';
   console.log(`\n  📁 ${repo.nameWithOwner} (branch: ${branch || 'none'})`);
 
-  // Search API calls run sequentially to respect the rate limit;
-  // discussions (GraphQL) and commits (REST paginate) run concurrently.
-  const issues = await countIssues(repo.nameWithOwner, login, start, end);
-  const prs = await countPRs(repo.nameWithOwner, login, start, end);
-  const [discussions, commits] = await Promise.all([
+  // Search API calls run sequentially to respect the rate limit
+  let issues = 0;
+  try { issues = await countIssues(repo.nameWithOwner, login, start, end); }
+  catch (e) { console.warn(`    ⚠ Issues for ${repo.nameWithOwner}: ${(e as Error).message}`); }
+
+  let prs = 0;
+  try { prs = await countPRs(repo.nameWithOwner, login, start, end); }
+  catch (e) { console.warn(`    ⚠ PRs for ${repo.nameWithOwner}: ${(e as Error).message}`); }
+
+  // Discussions (GraphQL) and commits (REST paginate) run concurrently
+  const [discussionsResult, commitsResult] = await Promise.allSettled([
     countDiscussions(owner, name, login, start, end),
     branch ? countCommits(owner, name, branch, login, start, end) : Promise.resolve(0),
   ]);
 
+  const discussions =
+    discussionsResult.status === 'fulfilled'
+      ? discussionsResult.value
+      : (console.warn(`    ⚠ Discussions for ${owner}/${name}: ${(discussionsResult.reason as Error).message}`), 0);
+
+  const commits =
+    commitsResult.status === 'fulfilled'
+      ? commitsResult.value
+      : (console.warn(`    ⚠ Commits for ${owner}/${name}: ${(commitsResult.reason as Error).message}`), 0);
+
   console.log(
     `     Issues: ${issues}  PRs: ${prs}  Discussions: ${discussions}  Commits: ${commits}`,
   );
+
+  // Skip repos where the authenticated user made no contributions
+  if (issues + prs + discussions + commits === 0) {
+    console.log(`     ↳ skipped (all-zero stats)`);
+    continue;
+  }
+
   newEntries.push({ start, end, name: repo.nameWithOwner, issues, discussions, pull_requests: prs, commits });
 }
 

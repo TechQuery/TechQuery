@@ -45,206 +45,91 @@
 
 #### 2025-04
 
-1. ShadcnX
+1. [idea2app/ShadcnX](https://github.com/idea2app/ShadcnX)
     - issues: 0
     - discussions: 0
     - pull_requests: 1
     - commits: 18
-2. Taro-idb-keyval
+2. [idea2app/Taro-idb-keyval](https://github.com/idea2app/Taro-idb-keyval)
     - issues: 0
     - discussions: 0
     - pull_requests: 0
     - commits: 1
-3. Lark-Next-Shadcn-ts
+3. [idea2app/Lark-Next-Shadcn-ts](https://github.com/idea2app/Lark-Next-Shadcn-ts)
     - issues: 0
     - discussions: 0
     - pull_requests: 0
     - commits: 1
-4. Nuxt-MobX-Shadcn-ts
+4. [idea2app/Nuxt-MobX-Shadcn-ts](https://github.com/idea2app/Nuxt-MobX-Shadcn-ts)
     - issues: 1
     - discussions: 0
     - pull_requests: 1
     - commits: 3
-5. MobX-Vue-helper
+5. [idea2app/MobX-Vue-helper](https://github.com/idea2app/MobX-Vue-helper)
     - issues: 0
     - discussions: 0
     - pull_requests: 0
     - commits: 8
-6. MobX-RESTful-migrator
+6. [idea2app/MobX-RESTful-migrator](https://github.com/idea2app/MobX-RESTful-migrator)
     - issues: 0
     - discussions: 0
     - pull_requests: 3
     - commits: 7
-7. MobX-RESTful-Shadcn
+7. [idea2app/MobX-RESTful-Shadcn](https://github.com/idea2app/MobX-RESTful-Shadcn)
     - issues: 0
     - discussions: 0
     - pull_requests: 1
     - commits: 4
-8. GitHub-Copilot-agent-task
+8. [idea2app/GitHub-Copilot-agent-task](https://github.com/idea2app/GitHub-Copilot-agent-task)
     - issues: 0
     - discussions: 0
     - pull_requests: 0
     - commits: 1
-9. CDSN-cache
+9. [idea2app/CDSN-cache](https://github.com/idea2app/CDSN-cache)
     - issues: 0
     - discussions: 0
     - pull_requests: 0
     - commits: 1
-10. Preact-MobX-M3E-Tailwind-ts
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-11. Wiki-PWA
+10. [idea2app/Wiki-PWA](https://github.com/idea2app/Wiki-PWA)
     - issues: 0
     - discussions: 0
     - pull_requests: 0
     - commits: 1
-12. China-NGO-database
+11. [Open-Source-Bazaar/China-NGO-database](https://github.com/Open-Source-Bazaar/China-NGO-database)
     - issues: 1
     - discussions: 0
     - pull_requests: 1
     - commits: 7
-13. oss-project-committee-weekly
+12. [Open-Source-Bazaar/oss-project-committee-weekly](https://github.com/Open-Source-Bazaar/oss-project-committee-weekly)
     - issues: 0
     - discussions: 0
     - pull_requests: 1
     - commits: 3
-14. ActivityHub-Lark
+13. [Open-Source-Bazaar/ActivityHub-Lark](https://github.com/Open-Source-Bazaar/ActivityHub-Lark)
     - issues: 0
     - discussions: 0
     - pull_requests: 1
     - commits: 5
-15. OrgServer-Lark
+14. [Open-Source-Bazaar/OrgServer-Lark](https://github.com/Open-Source-Bazaar/OrgServer-Lark)
     - issues: 0
     - discussions: 0
     - pull_requests: 1
     - commits: 2
-16. IdeaShop-server
+15. [IdeaMall/IdeaShop-server](https://github.com/IdeaMall/IdeaShop-server)
     - issues: 0
     - discussions: 0
     - pull_requests: 1
     - commits: 2
-17. AI-develop
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-18. Awesome-Astron-Workflow
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-19. G-Star_social-impact
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-20. event
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-21. yi-xing-hub
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-22. ScentMate
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-23. KooWiki
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-24. GoodAction-data
+16. [GoodAction-Hub/GoodAction-data](https://github.com/GoodAction-Hub/GoodAction-data)
     - issues: 0
     - discussions: 0
     - pull_requests: 1
     - commits: 3
-25. GoodAction-Hub.github.io
+17. [GoodAction-Hub/GoodAction-Hub.github.io](https://github.com/GoodAction-Hub/GoodAction-Hub.github.io)
     - issues: 0
     - discussions: 0
     - pull_requests: 1
     - commits: 3
-26. website.vibe
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-27. website
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-28. COSCon-2025-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-29. COSCon-2024-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-30. COSCon-2023-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-31. COSCon-2022-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-32. COSCon-2021-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-33. COSCon-2020-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-34. COSCon-2019-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-35. COSCon-2018-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-36. COSCon-2017-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-37. COSCon-2016-slides
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-38. COSCon
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-39. .github
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
-40. LocalAIStack
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - commits: 0
 
 </details>
 
