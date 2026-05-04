@@ -422,12 +422,18 @@ for (const repo of allRepos) {
 
   // Search API calls run sequentially to respect the rate limit
   let issues = 0;
-  try { issues = await countIssues(repo.nameWithOwner, login, start, end); }
-  catch (e) { console.warn(`    ⚠ Issues for ${repo.nameWithOwner}: ${(e as Error).message}`); }
+  try {
+    issues = await countIssues(repo.nameWithOwner, login, start, end);
+  } catch (e) {
+    console.warn(`    ⚠ Issues for ${repo.nameWithOwner}: ${(e as Error).message}`);
+  }
 
   let prs = 0;
-  try { prs = await countPRs(repo.nameWithOwner, login, start, end); }
-  catch (e) { console.warn(`    ⚠ PRs for ${repo.nameWithOwner}: ${(e as Error).message}`); }
+  try {
+    prs = await countPRs(repo.nameWithOwner, login, start, end);
+  } catch (e) {
+    console.warn(`    ⚠ PRs for ${repo.nameWithOwner}: ${(e as Error).message}`);
+  }
 
   // Discussions (GraphQL) and commits (REST paginate) run concurrently
   const [discussionsResult, commitsResult] = await Promise.allSettled([
