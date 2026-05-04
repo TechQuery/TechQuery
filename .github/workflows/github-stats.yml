@@ -1,0 +1,72 @@
+name: GitHub Contribution Stats
+
+on:
+  # Run automatically on the 1st of every month at 00:00 UTC
+  schedule:
+    - cron: "0 0 1 * *"
+
+  # Allow manual triggering with explicit start/end dates (stdout only, no files written)
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Start date (YYYY-MM-DD)"
+        required: true
+        type: string
+      end_date:
+        description: "End date (YYYY-MM-DD)"
+        required: true
+        type: string
+
+permissions:
+  contents: write # needed to commit github-stats.yml and README.md
+  pull-requests: write # needed by create-pull-request to open/update PRs
+
+jobs:
+  collect-stats:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Collect contribution stats (manual – stdout only)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          deno run --allow-all .github/scripts/collect-stats.ts \
+            --start-date="${{ inputs.start_date }}" \
+            --end-date="${{ inputs.end_date }}"
+
+      - name: Collect contribution stats (scheduled – write files)
+        if: github.event_name == 'schedule'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          START_DATE=$(date -d "$(date +%Y-%m-01) -1 month" +%Y-%m-%d)
+          END_DATE=$(date -d "$(date +%Y-%m-01) -1 day" +%Y-%m-%d)
+
+          deno run --allow-all .github/scripts/collect-stats.ts \
+            --start-date="$START_DATE" \
+            --end-date="$END_DATE" \
+            --output=github-stats.yml
+
+          LAST_MONTH=$(date -d "$(date +%Y-%m-01) -1 month" +%Y-%m)
+          echo "LAST_MONTH=$LAST_MONTH" >> "$GITHUB_ENV"
+
+      - uses: peter-evans/create-pull-request@v7
+        if: github.event_name == 'schedule'
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: |
+            github-stats.yml
+            README.md
+          commit-message: "chore: update GitHub contribution stats for ${{ env.LAST_MONTH }}"
+          branch: "chore/github-stats-${{ env.LAST_MONTH }}"
+          delete-branch: true
+          title: "chore: update GitHub contribution stats for ${{ env.LAST_MONTH }}"
+          body: "Automated monthly update of GitHub contribution stats."
+          assignees: TechQuery
