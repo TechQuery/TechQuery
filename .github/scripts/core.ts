@@ -7,8 +7,7 @@ import { gql, ghSearch, toISOTimestamp } from './utility.ts';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface RepoStats {
-  start: string;
-  end: string;
+  createdAt: string;
   name: string;
   issues: number;
   discussions: number;
@@ -253,7 +252,8 @@ export async function loadStats(filePath: string): Promise<RepoStats[]> {
 }
 
 export async function saveStats(filePath: string, stats: RepoStats[]): Promise<void> {
-  await writeFile(filePath, stringifyYaml(stats));
+  const sorted = [...stats].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  await writeFile(filePath, stringifyYaml(sorted));
   console.log(`✅ Saved stats to ${filePath}`);
 }
 
@@ -279,7 +279,7 @@ export function* buildMarkdownSectionLines(entries: RepoStats[]): Generator<stri
   const byMonth = new Map<string, RepoStats[]>();
 
   for (const entry of entries) {
-    const month = entry.start.slice(0, 7);
+    const month = entry.createdAt.slice(0, 7);
     const list = byMonth.get(month) ?? [];
 
     list.push(entry);

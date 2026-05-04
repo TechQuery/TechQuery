@@ -178,8 +178,7 @@ for (const repo of allRepos) {
   }
 
   newEntries.push({
-    start,
-    end,
+    createdAt: repo.createdAt,
     name: repo.nameWithOwner,
     issues,
     discussions,
@@ -198,9 +197,9 @@ for (const entry of newEntries) console.table(entry);
 if (outputArg) {
   const statsFile = outputArg.startsWith('/') ? outputArg : join(ROOT, outputArg);
 
-  // Load existing data, remove stale entries for the same period, then append
+  // Load existing data, remove any existing entries for the same repos, then append
   const existing = await loadStats(statsFile);
-  const filtered = existing.filter((e) => !(e.start === start && e.end === end));
+  const filtered = existing.filter((e) => !newEntries.some((n) => n.name === e.name));
   const updated = [...filtered, ...newEntries];
 
   await saveStats(statsFile, updated);
