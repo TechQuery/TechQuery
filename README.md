@@ -29,7 +29,7 @@
 <h3 align="left">Languages and Tools:</h3>
 <p align="left">
   <a href="https://skillicons.dev">
-    <img src="https://skillicons.dev/icons?i=ts,js,html,css,react,vue,nextjs,nodejs,postgres,docker,git,linux,jest,bootstrap,electron,sqlite&perline=8" />
+    <img src="https://skillicons.dev/icons?i=ts,js,html,css,react,vue,nextjs,nodejs,postgres,docker,git,linux,jest,bootstrap,electron,sqlite&perline=8" alt="Languages and tools: TypeScript, JavaScript, HTML, CSS, React, Vue, Next.js, Node.js, PostgreSQL, Docker, Git, Linux, Jest, Bootstrap, Electron, SQLite" />
   </a>
 </p>
 
