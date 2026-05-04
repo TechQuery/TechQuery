@@ -34,3 +34,148 @@
 <p>&nbsp;<img align="center" src="https://github-readme-stats.vercel.app/api?username=techquery&show_icons=true&locale=en" alt="techquery" /></p>
 
 <p><img align="center" src="https://github-readme-streak-stats.herokuapp.com/?user=techquery&" alt="techquery" /></p>
+
+## GitHub 贡献统计
+
+<details><summary>2025</summary>
+
+### 2025
+
+<details><summary>2025-04</summary>
+
+#### 2025-04
+
+1. ShadcnX
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 1
+    - commits: 18
+2. Taro-idb-keyval
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 1
+3. Lark-Next-Shadcn-ts
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 1
+4. Nuxt-MobX-Shadcn-ts
+    - issues: 1
+    - discussions: 0
+    - pull_requests: 1
+    - commits: 3
+5. MobX-Vue-helper
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 8
+6. MobX-RESTful-migrator
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 3
+    - commits: 7
+7. MobX-RESTful-Shadcn
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 1
+    - commits: 4
+8. GitHub-Copilot-agent-task
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 1
+9. CDSN-cache
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 1
+10. Preact-MobX-M3E-Tailwind-ts
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+11. Wiki-PWA
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 1
+12. LocalAIStack
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+13. COSCon
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+14. website
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+15. COSCon-2018-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+16. COSCon-2016-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+17. COSCon-2021-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+18. COSCon-2022-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+19. website.vibe
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+20. COSCon-2023-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+21. .github
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+22. COSCon-2017-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+23. COSCon-2024-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+24. COSCon-2020-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+25. COSCon-2025-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+26. COSCon-2019-slides
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - commits: 0
+
+</details>
+
+</details>
