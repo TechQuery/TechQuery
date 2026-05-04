@@ -5,7 +5,7 @@ on:
   schedule:
     - cron: '0 0 1 * *'
 
-  # Allow manual triggering with explicit start/end dates
+  # Allow manual triggering with explicit start/end dates (stdout only, no files written)
   workflow_dispatch:
     inputs:
       start_date:
@@ -25,33 +25,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: '20'
+          deno-version: v2.x
 
-      - name: Collect contribution stats
+      - name: Collect contribution stats (manual – stdout only)
+        if: github.event_name == 'workflow_dispatch'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          START_DATE: ${{ inputs.start_date }}
-          END_DATE: ${{ inputs.end_date }}
-          # "true" when triggered manually → stdout only, no file writes
-          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
-        run: node .github/scripts/collect-stats.js
+        run: |
+          deno run --allow-all .github/scripts/collect-stats.ts \
+            --start-date="${{ inputs.start_date }}" \
+            --end-date="${{ inputs.end_date }}"
+
+      - name: Collect contribution stats (scheduled – write files)
+        if: github.event_name == 'schedule'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          deno run --allow-all .github/scripts/collect-stats.ts \
+            --output=github-stats.yml
 
       - name: Commit and push updated files
-        # Only runs on the scheduled (monthly) trigger
         if: github.event_name == 'schedule'
         run: |
           git config user.name  'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add github-stats.yml README.md
-          # Derive last month in a portable way (works on Linux and macOS)
-          LAST_MONTH=$(node -p "const d=new Date();d.setDate(0);d.toISOString().slice(0,7)")
+          # Derive last month portably using Deno
+          LAST_MONTH=$(deno eval "const d=new Date();d.setDate(0);console.log(d.toISOString().slice(0,7))")
           # Only commit when there are actual changes
           git diff --staged --quiet || \
             git commit -m "chore: update GitHub contribution stats for ${LAST_MONTH}"
           git push
+
