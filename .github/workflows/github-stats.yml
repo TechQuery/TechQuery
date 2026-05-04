@@ -1,0 +1,57 @@
+name: GitHub Contribution Stats
+
+on:
+  # Run automatically on the 1st of every month at 00:00 UTC
+  schedule:
+    - cron: '0 0 1 * *'
+
+  # Allow manual triggering with explicit start/end dates
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: 'Start date (YYYY-MM-DD)'
+        required: true
+        type: string
+      end_date:
+        description: 'End date (YYYY-MM-DD)'
+        required: true
+        type: string
+
+permissions:
+  contents: write   # needed to commit github-stats.yml and README.md
+
+jobs:
+  collect-stats:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Collect contribution stats
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          START_DATE: ${{ inputs.start_date }}
+          END_DATE: ${{ inputs.end_date }}
+          # "true" when triggered manually → stdout only, no file writes
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+        run: node .github/scripts/collect-stats.js
+
+      - name: Commit and push updated files
+        # Only runs on the scheduled (monthly) trigger
+        if: github.event_name == 'schedule'
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add github-stats.yml README.md
+          # Derive last month in a portable way (works on Linux and macOS)
+          LAST_MONTH=$(node -p "const d=new Date();d.setDate(0);d.toISOString().slice(0,7)")
+          # Only commit when there are actual changes
+          git diff --staged --quiet || \
+            git commit -m "chore: update GitHub contribution stats for ${LAST_MONTH}"
+          git push
