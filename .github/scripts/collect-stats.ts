@@ -22,6 +22,7 @@ import { $, argv } from 'npm:zx';
 import { parse as parseYaml, stringify as stringifyYaml } from 'jsr:@std/yaml';
 import { buildURLData, sleep } from 'npm:web-utility';
 import { readFile, writeFile } from 'node:fs/promises';
+import { exit } from 'node:process';
 
 $.verbose = true;
 
@@ -29,7 +30,7 @@ $.verbose = true;
 
 globalThis.addEventListener('unhandledrejection', ({ reason }) => {
   console.error('Unhandled rejection:', reason);
-  process.exit(1);
+  exit(1);
 });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -434,15 +435,13 @@ for (const repo of allRepos) {
     branch ? countCommits(owner, name, branch, login, start, end) : Promise.resolve(0),
   ]);
 
-  const discussions =
-    discussionsResult.status === 'fulfilled'
-      ? discussionsResult.value
-      : (console.warn(`    ⚠ Discussions for ${owner}/${name}: ${(discussionsResult.reason as Error).message}`), 0);
+  let discussions = 0;
+  if (discussionsResult.status === 'fulfilled') discussions = discussionsResult.value;
+  else console.warn(`    ⚠ Discussions for ${owner}/${name}: ${(discussionsResult.reason as Error).message}`);
 
-  const commits =
-    commitsResult.status === 'fulfilled'
-      ? commitsResult.value
-      : (console.warn(`    ⚠ Commits for ${owner}/${name}: ${(commitsResult.reason as Error).message}`), 0);
+  let commits = 0;
+  if (commitsResult.status === 'fulfilled') commits = commitsResult.value;
+  else console.warn(`    ⚠ Commits for ${owner}/${name}: ${(commitsResult.reason as Error).message}`);
 
   console.log(
     `     Issues: ${issues}  PRs: ${prs}  Discussions: ${discussions}  Commits: ${commits}`,
