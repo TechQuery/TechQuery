@@ -18,11 +18,11 @@
  */
 
 import 'npm:dotenv/config';
-import { $, argv } from 'npm:zx';
-import { changeDate, changeMonth, Day, formatDate, makeDateRange } from 'npm:web-utility';
-import { join } from 'node:path';
-import { exit } from 'node:process';
-import { gql, toISOTimestamp } from './utility.ts';
+import { $, argv, path } from 'npm:zx';
+import WebUtility from 'npm:web-utility';
+import { fileURLToPath } from 'node:url';
+
+import { gql, resolvePath, toISOTimestamp } from './utility.ts';
 import {
   countCommits,
   countDiscussions,
@@ -38,20 +38,22 @@ import {
   yieldReposInDateRange,
 } from './core.ts';
 
+const { changeDate, changeMonth, Day, formatDate, makeDateRange } = WebUtility;
+
 $.verbose = true;
 
 // ── Global error handler ──────────────────────────────────────────────────────
 
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled rejection:', reason);
-  exit(1);
+  process.exit(1);
 });
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 // Script lives at .github/scripts/; repo root is two levels up
-const ROOT = new URL('../../', import.meta.url).pathname;
-const MARKDOWN_FILE = join(ROOT, 'README.md');
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
+const MARKDOWN_FILE = path.join(ROOT, 'README.md');
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -106,12 +108,14 @@ for (const owner of owners) {
       owner,
       toISOTimestamp(start),
       toISOTimestamp(end, true),
-    )) {
+    ))
       allRepos.push(repo);
-    }
+
     console.log(`   collected so far: ${allRepos.length}`);
-  } catch (e) {
-    console.warn(`   ⚠ Could not access repos for ${owner}: ${(e as Error).message}`);
+  } catch (error) {
+    console.warn(
+      `   ⚠ Could not access repos for ${owner}: ${(error as Error).message}`,
+    );
   }
 }
 
@@ -123,56 +127,80 @@ const newEntries: RepoStats[] = [];
 for (const repo of allRepos) {
   const [owner, name] = repo.nameWithOwner.split('/');
   const branch = repo.defaultBranchRef?.name ?? '';
+
   console.log(`\n  📁 ${repo.nameWithOwner} (branch: ${branch || 'none'})`);
 
   // Search API calls run sequentially to respect the rate limit
   let issues = 0;
   try {
     issues = await countIssues(repo.nameWithOwner, login, start, end);
-  } catch (e) {
-    console.warn(`    ⚠ Issues for ${repo.nameWithOwner}: ${(e as Error).message}`);
+  } catch (error) {
+    console.warn(
+      `    ⚠ Issues for ${repo.nameWithOwner}: ${(error as Error).message}`,
+    );
   }
 
   let prs = 0;
   try {
     prs = await countPRs(repo.nameWithOwner, login, start, end);
-  } catch (e) {
-    console.warn(`    ⚠ PRs for ${repo.nameWithOwner}: ${(e as Error).message}`);
+  } catch (error) {
+    console.warn(
+      `    ⚠ PRs for ${repo.nameWithOwner}: ${(error as Error).message}`,
+    );
   }
 
   let reviewedPRs = 0;
   try {
     reviewedPRs = await countReviewedPRs(repo.nameWithOwner, login, start, end);
-  } catch (e) {
-    console.warn(`    ⚠ Reviewed PRs for ${repo.nameWithOwner}: ${(e as Error).message}`);
+  } catch (error) {
+    console.warn(
+      `    ⚠ Reviewed PRs for ${repo.nameWithOwner}: ${(error as Error).message}`,
+    );
   }
 
   // Non-search calls run concurrently
-  const [discussionsResult, reviewCommentsResult, commitsResult] = await Promise.allSettled([
-    countDiscussions(owner, name, login, start, end),
-    countReviewComments(owner, name, login, start, end),
-    branch ? countCommits(owner, name, branch, login, start, end) : Promise.resolve(0),
-  ]);
+  const [discussionsResult, reviewCommentsResult, commitsResult] =
+    await Promise.allSettled([
+      countDiscussions(owner, name, login, start, end),
+      countReviewComments(owner, name, login, start, end),
+      branch
+        ? countCommits(owner, name, branch, login, start, end)
+        : Promise.resolve(0),
+    ]);
 
   let discussions = 0;
-  if (discussionsResult.status === 'fulfilled') discussions = discussionsResult.value;
-  else console.warn(`    ⚠ Discussions for ${owner}/${name}: ${(discussionsResult.reason as Error).message}`);
+  if (discussionsResult.status === 'fulfilled')
+    discussions = discussionsResult.value;
+  else
+    console.warn(
+      `    ⚠ Discussions for ${owner}/${name}: ${(discussionsResult.reason as Error).message}`,
+    );
 
   let reviewComments = 0;
-  if (reviewCommentsResult.status === 'fulfilled') reviewComments = reviewCommentsResult.value;
-  else console.warn(`    ⚠ Review comments for ${owner}/${name}: ${(reviewCommentsResult.reason as Error).message}`);
+  if (reviewCommentsResult.status === 'fulfilled')
+    reviewComments = reviewCommentsResult.value;
+  else
+    console.warn(
+      `    ⚠ Review comments for ${owner}/${name}: ${(reviewCommentsResult.reason as Error).message}`,
+    );
 
   let commits = 0;
   if (commitsResult.status === 'fulfilled') commits = commitsResult.value;
-  else console.warn(`    ⚠ Commits for ${owner}/${name}: ${(commitsResult.reason as Error).message}`);
+  else
+    console.warn(
+      `    ⚠ Commits for ${owner}/${name}: ${(commitsResult.reason as Error).message}`,
+    );
 
   console.log(
     `     Issues: ${issues}  PRs: ${prs}  Reviewed PRs: ${reviewedPRs}  ` +
-    `Review comments: ${reviewComments}  Discussions: ${discussions}  Commits: ${commits}`,
+      `Review comments: ${reviewComments}  Discussions: ${discussions}  Commits: ${commits}`,
   );
 
   // Skip repos where the authenticated user made no contributions
-  if (issues + prs + reviewedPRs + reviewComments + discussions + commits === 0) {
+  if (
+    issues + prs + reviewedPRs + reviewComments + discussions + commits ===
+    0
+  ) {
     console.log(`     ↳ skipped (all-zero stats)`);
     continue;
   }
@@ -195,11 +223,13 @@ for (const entry of newEntries) console.table(entry);
 
 // 5. Persist only when an output file was specified
 if (outputArg) {
-  const statsFile = outputArg.startsWith('/') ? outputArg : join(ROOT, outputArg);
+  const statsFile = await resolvePath(ROOT, outputArg, 'github-stats.yml');
 
   // Load existing data, remove any existing entries for the same repos, then append
   const existing = await loadStats(statsFile);
-  const filtered = existing.filter((e) => !newEntries.some((n) => n.name === e.name));
+  const filtered = existing.filter(
+    (e) => !newEntries.some((n) => n.name === e.name),
+  );
   const updated = [...filtered, ...newEntries];
 
   await saveStats(statsFile, updated);

@@ -1,8 +1,10 @@
-import { $ } from 'npm:zx';
+import { $, fs } from 'npm:zx';
 import { parse as parseYaml, stringify as stringifyYaml } from 'npm:yaml';
-import { buildURLData } from 'npm:web-utility';
-import { readFile, writeFile } from 'node:fs/promises';
+import WebUtility from 'npm:web-utility';
+
 import { gql, ghSearch, toISOTimestamp } from './utility.ts';
+
+const { buildURLData } = WebUtility;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -48,7 +50,6 @@ const REPOS_QUERY = `
     }
   }
 `;
-
 type RepoNodeWithPrivacy = RepoNode & { isPrivate: boolean };
 
 interface ReposQueryData {
@@ -84,11 +85,14 @@ export async function* yieldReposInDateRange(
     for (const repo of nodes) {
       const created = new Date(repo.createdAt);
       if (created > untilDate) continue; // newer than range, skip
-      if (created < sinceDate) { pastRange = true; break; } // older than range, stop
+      if (created < sinceDate) {
+        pastRange = true;
+        break;
+      } // older than range, stop
       if (!repo.isPrivate) yield repo; // only yield public repos
     }
-
     if (pastRange || !pageInfo.hasNextPage) break;
+
     cursor = pageInfo.endCursor;
   }
 }
@@ -103,7 +107,10 @@ export async function countIssues(
   end: string,
 ): Promise<number> {
   const { total_count } = await ghSearch<{ total_count: number }>(
-    `/search/issues?${buildURLData({ q: `repo:${repo} is:issue author:${login} created:${start}..${end}`, per_page: 1 })}`,
+    `/search/issues?${buildURLData({
+      q: `repo:${repo} is:issue author:${login} created:${start}..${end}`,
+      per_page: 1,
+    })}`,
   );
   return total_count;
 }
@@ -116,7 +123,10 @@ export async function countPRs(
   end: string,
 ): Promise<number> {
   const { total_count } = await ghSearch<{ total_count: number }>(
-    `/search/issues?${buildURLData({ q: `repo:${repo} is:pr author:${login} created:${start}..${end}`, per_page: 1 })}`,
+    `/search/issues?${buildURLData({
+      q: `repo:${repo} is:pr author:${login} created:${start}..${end}`,
+      per_page: 1,
+    })}`,
   );
   return total_count;
 }
@@ -129,7 +139,10 @@ export async function countReviewedPRs(
   end: string,
 ): Promise<number> {
   const { total_count } = await ghSearch<{ total_count: number }>(
-    `/search/issues?${buildURLData({ q: `repo:${repo} is:pr reviewed-by:${login} created:${start}..${end}`, per_page: 1 })}`,
+    `/search/issues?${buildURLData({
+      q: `repo:${repo} is:pr reviewed-by:${login} created:${start}..${end}`,
+      per_page: 1,
+    })}`,
   );
   return total_count;
 }
@@ -148,7 +161,6 @@ const DISCUSSIONS_QUERY = `
     }
   }
 `;
-
 interface DiscussionNode {
   author: { login: string } | null;
   createdAt: string;
@@ -174,27 +186,33 @@ export async function countDiscussions(
   since: string,
   until: string,
 ): Promise<number> {
-  let total = 0;
-  let cursor: string | null = null;
   const sinceDate = new Date(toISOTimestamp(since));
   const untilDate = new Date(toISOTimestamp(until, true));
+  let total = 0;
+  let cursor: string | null = null;
 
   while (true) {
     const args = ['-f', `owner=${owner}`, '-f', `name=${name}`];
     if (cursor) args.push('-f', `after=${cursor}`);
 
-    const { repository } = await gql<DiscussionsQueryData>(DISCUSSIONS_QUERY, args);
+    const { repository } = await gql<DiscussionsQueryData>(
+      DISCUSSIONS_QUERY,
+      args,
+    );
     const { nodes, pageInfo } = repository.discussions;
     let pastRange = false;
 
     for (const d of nodes) {
       const created = new Date(d.createdAt);
       if (created > untilDate) continue;
-      if (created < sinceDate) { pastRange = true; break; }
+      if (created < sinceDate) {
+        pastRange = true;
+        break;
+      }
       if (d.author?.login === login) total++;
     }
-
     if (pastRange || !pageInfo.hasNextPage) break;
+
     cursor = pageInfo.endCursor;
   }
 
@@ -213,9 +231,10 @@ export async function countReviewComments(
     since: toISOTimestamp(start),
     per_page: 100,
   })}`;
-  const jqFilter =
-    `.[] | select(.user.login == "${login}" and .created_at <= "${toISOTimestamp(end, true)}") | .id`;
+  const jqFilter = `.[] | select(.user.login == "${login}" and .created_at <= "${toISOTimestamp(end, true)}") | .id`;
+
   const result = await $`gh api --paginate ${path} --jq ${jqFilter}`;
+
   return result.stdout.trim().split('\n').filter(Boolean).length;
 }
 
@@ -244,16 +263,23 @@ export async function countCommits(
 
 export async function loadStats(filePath: string): Promise<RepoStats[]> {
   try {
-    const content = await readFile(filePath, 'utf8');
+    const content = await fs.readFile(filePath, 'utf8');
+
     return (parseYaml(content) as RepoStats[]) ?? [];
   } catch {
     return [];
   }
 }
 
-export async function saveStats(filePath: string, stats: RepoStats[]): Promise<void> {
-  const sorted = [...stats].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  await writeFile(filePath, stringifyYaml(sorted));
+export async function saveStats(
+  filePath: string,
+  stats: RepoStats[],
+): Promise<void> {
+  const sorted = stats.toSorted((a, b) =>
+    a.createdAt.localeCompare(b.createdAt),
+  );
+  await fs.writeFile(filePath, stringifyYaml(sorted));
+
   console.log(`✅ Saved stats to ${filePath}`);
 }
 
@@ -274,7 +300,9 @@ export async function saveStats(filePath: string, stats: RepoStats[]): Promise<v
  *   </details>
  *   </details>
  */
-export function* buildMarkdownSectionLines(entries: RepoStats[]): Generator<string> {
+export function* buildMarkdownSectionLines(
+  entries: RepoStats[],
+): Generator<string> {
   // Group entries by month (YYYY-MM)
   const byMonth = new Map<string, RepoStats[]>();
 
@@ -300,10 +328,14 @@ export function* buildMarkdownSectionLines(entries: RepoStats[]): Generator<stri
   yield MARKDOWN_HEADING;
 
   for (const year of [...byYear.keys()].sort().reverse()) {
-    yield `<details><summary>${year}</summary>\n\n### ${year}`;
+    yield `<details><summary>${year}</summary>
+
+### ${year}`;
 
     for (const month of (byYear.get(year) ?? []).sort().reverse()) {
-      yield `<details><summary>${month}</summary>\n\n#### ${month}`;
+      yield `<details><summary>${month}</summary>
+
+#### ${month}`;
 
       for (const [i, repo] of (byMonth.get(month) ?? []).entries())
         yield `${i + 1}. [${repo.name}](https://github.com/${repo.name})
@@ -321,8 +353,12 @@ export function* buildMarkdownSectionLines(entries: RepoStats[]): Generator<stri
   }
 }
 
-export async function updateMarkdown(filePath: string, entries: RepoStats[]): Promise<void> {
-  let markdown = await readFile(filePath, 'utf8');
+export async function updateMarkdown(
+  filePath: string,
+  entries: RepoStats[],
+): Promise<void> {
+  let markdown = await fs.readFile(filePath, 'utf8');
+
   const section = [...buildMarkdownSectionLines(entries)].join('\n\n');
 
   const index = markdown.indexOf(MARKDOWN_HEADING);
@@ -331,6 +367,7 @@ export async function updateMarkdown(filePath: string, entries: RepoStats[]): Pr
       ? markdown.slice(0, index) + section
       : markdown.trimEnd() + '\n\n' + section;
 
-  await writeFile(filePath, markdown);
+  await fs.writeFile(filePath, markdown);
+
   console.log(`✅ Updated ${filePath}`);
 }
