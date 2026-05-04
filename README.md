@@ -17,13 +17,7 @@
 - 📄 Know about my experiences [https://tech-query.me/resume.html](https://tech-query.me/resume.html)
 
 <h3 align="left">Connect with me:</h3>
-<p align="left">
-<a href="https://codepen.io/techquery" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/codepen.svg" alt="techquery" height="30" width="40" /></a>
-<a href="https://twitter.com/techquery_fcc" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/twitter.svg" alt="techquery_fcc" height="30" width="40" /></a>
-<a href="https://linkedin.com/in/techquery" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="techquery" height="30" width="40" /></a>
-<a href="https://codesandbox.com/techquery" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/codesandbox.svg" alt="techquery" height="30" width="40" /></a>
-<a href="https://tech-query.me/atom.xml" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/rss.svg" alt="https://tech-query.me/atom.xml" height="30" width="40" /></a>
-</p>
+<p align="left"><a href="https://codepen.io/techquery" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/codepen.svg" alt="codepen" height="30" width="40" /></a><a href="https://twitter.com/techquery_fcc" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/twitter.svg" alt="twitter" height="30" width="40" /></a><a href="https://linkedin.com/in/techquery" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="linkedin" height="30" width="40" /></a><a href="https://codesandbox.com/techquery" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/codesandbox.svg" alt="codesandbox" height="30" width="40" /></a><a href="https://tech-query.me/atom.xml" target="_blank"><img src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/rss.svg" alt="rss" height="30" width="40" /></a></p>
 
 <h3 align="left">Languages and Tools:</h3>
 <p align="left">
@@ -32,9 +26,6 @@
   </a>
 </p>
 
-<p><img align="left" src="https://github-readme-stats.vercel.app/api/top-langs?username=techquery&show_icons=true&locale=en&layout=compact" alt="techquery" /></p>
-
-<p>&nbsp;<img align="center" src="https://github-readme-stats.vercel.app/api?username=techquery&show_icons=true&locale=en" alt="techquery" /></p>
 
 <p><img align="center" src="https://streak-stats.demolab.com/?user=techquery" alt="techquery" /></p>
 
