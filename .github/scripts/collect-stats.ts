@@ -20,6 +20,7 @@
 import 'npm:dotenv/config';
 import { $, argv } from 'npm:zx';
 import { changeDate, changeMonth, Day, formatDate, makeDateRange } from 'npm:web-utility';
+import { join } from 'node:path';
 import { exit } from 'node:process';
 import { gql, toISOTimestamp } from './utility.ts';
 import {
@@ -50,7 +51,7 @@ process.on('unhandledRejection', (reason) => {
 
 // Script lives at .github/scripts/; repo root is two levels up
 const ROOT = new URL('../../', import.meta.url).pathname;
-const README_FILE = `${ROOT}README.md`;
+const MARKDOWN_FILE = join(ROOT, 'README.md');
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -69,18 +70,27 @@ function getDateRange(): { start: string; end: string } {
   return { start, end };
 }
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface ViewerData {
+  viewer: {
+    login: string;
+    organizations: { nodes: { login: string }[] };
+  };
+}
+
 // ── Main (top-level await) ────────────────────────────────────────────────────
 
 const { start, end } = getDateRange();
 console.log(`📅 Date range: ${start} → ${end}`);
 
 // 1. Authenticated user + organisations
-const viewerData = await gql<{
-  viewer: { login: string; organizations: { nodes: { login: string }[] } };
-}>(`{ viewer { login organizations(first: 100) { nodes { login } } } }`);
+const { viewer } = await gql<ViewerData>(
+  `{ viewer { login organizations(first: 100) { nodes { login } } } }`,
+);
 
-const login = viewerData.viewer.login;
-const orgs = (viewerData.viewer.organizations?.nodes ?? []).map((o) => o.login);
+const { login } = viewer;
+const orgs = (viewer.organizations?.nodes ?? []).map((o) => o.login);
 
 console.log(`👤 User: ${login}`);
 if (orgs.length) console.log(`🏢 Orgs: ${orgs.join(', ')}`);
@@ -186,7 +196,7 @@ for (const entry of newEntries) console.table(entry);
 
 // 5. Persist only when an output file was specified
 if (outputArg) {
-  const statsFile = outputArg.startsWith('/') ? outputArg : `${ROOT}${outputArg}`;
+  const statsFile = outputArg.startsWith('/') ? outputArg : join(ROOT, outputArg);
 
   // Load existing data, remove stale entries for the same period, then append
   const existing = await loadStats(statsFile);
@@ -194,7 +204,7 @@ if (outputArg) {
   const updated = [...filtered, ...newEntries];
 
   await saveStats(statsFile, updated);
-  await updateMarkdown(README_FILE, updated);
+  await updateMarkdown(MARKDOWN_FILE, updated);
 } else {
   console.log('\nℹ️  No --output specified — no files written.');
 }

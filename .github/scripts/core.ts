@@ -21,13 +21,12 @@ export interface RepoStats {
 export interface RepoNode {
   nameWithOwner: string;
   createdAt: string;
-  isPrivate: boolean;
   defaultBranchRef: { name: string } | null;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-export const README_HEADING = '## GitHub 贡献统计';
+export const MARKDOWN_HEADING = '## GitHub 贡献统计';
 
 // ── Repo discovery ────────────────────────────────────────────────────────────
 
@@ -51,6 +50,17 @@ const REPOS_QUERY = `
   }
 `;
 
+type RepoNodeWithPrivacy = RepoNode & { isPrivate: boolean };
+
+interface ReposQueryData {
+  repositoryOwner: {
+    repositories: {
+      pageInfo: { hasNextPage: boolean; endCursor: string };
+      nodes: RepoNodeWithPrivacy[];
+    };
+  };
+}
+
 /**
  * Async generator that yields public repos owned by `owner` whose createdAt
  * falls within [since, until].  Both timestamps are ISO-8601 strings.
@@ -68,16 +78,8 @@ export async function* yieldReposInDateRange(
     const args = ['-f', `owner=${owner}`];
     if (cursor) args.push('-f', `after=${cursor}`);
 
-    const data = await gql<{
-      repositoryOwner: {
-        repositories: {
-          pageInfo: { hasNextPage: boolean; endCursor: string };
-          nodes: RepoNode[];
-        };
-      };
-    }>(REPOS_QUERY, args);
-
-    const { nodes, pageInfo } = data.repositoryOwner.repositories;
+    const { repositoryOwner } = await gql<ReposQueryData>(REPOS_QUERY, args);
+    const { nodes, pageInfo } = repositoryOwner.repositories;
     let pastRange = false;
 
     for (const repo of nodes) {
@@ -148,6 +150,20 @@ const DISCUSSIONS_QUERY = `
   }
 `;
 
+interface DiscussionNode {
+  author: { login: string } | null;
+  createdAt: string;
+}
+
+interface DiscussionsQueryData {
+  repository: {
+    discussions: {
+      pageInfo: { hasNextPage: boolean; endCursor: string };
+      nodes: DiscussionNode[];
+    };
+  };
+}
+
 /**
  * Count discussions started by `login` in `owner/name` during the period.
  * Uses GraphQL because the REST search API does not support discussions author filter.
@@ -168,16 +184,8 @@ export async function countDiscussions(
     const args = ['-f', `owner=${owner}`, '-f', `name=${name}`];
     if (cursor) args.push('-f', `after=${cursor}`);
 
-    const data = await gql<{
-      repository: {
-        discussions: {
-          pageInfo: { hasNextPage: boolean; endCursor: string };
-          nodes: { author: { login: string } | null; createdAt: string }[];
-        };
-      };
-    }>(DISCUSSIONS_QUERY, args);
-
-    const { nodes, pageInfo } = data.repository.discussions;
+    const { repository } = await gql<DiscussionsQueryData>(DISCUSSIONS_QUERY, args);
+    const { nodes, pageInfo } = repository.discussions;
     let pastRange = false;
 
     for (const d of nodes) {
@@ -252,14 +260,15 @@ export async function saveStats(filePath: string, stats: RepoStats[]): Promise<v
 // ── Markdown section builder ──────────────────────────────────────────────────
 
 /**
- * Generator that yields the lines of the Markdown contribution section.
+ * Generator that yields the blocks of the Markdown contribution section.
+ * Blocks are separated by `\n\n` when joined.
  *
  * Structure:
- *   ## GitHub 贡献统计          ← fixed H2
+ *   ## GitHub 贡献统计
  *   <details><summary>YYYY</summary>
- *   ### YYYY                   ← H3 per year (collapsed)
+ *   ### YYYY
  *   <details><summary>YYYY-MM</summary>
- *   #### YYYY-MM               ← H4 per month (collapsed)
+ *   #### YYYY-MM
  *   1. [org/repo](https://github.com/org/repo)
  *       - issues: 3
  *   </details>
@@ -288,13 +297,13 @@ export function* buildMarkdownSectionLines(entries: RepoStats[]): Generator<stri
     byYear.set(year, list);
   }
 
-  yield `${README_HEADING}\n`;
+  yield MARKDOWN_HEADING;
 
   for (const year of [...byYear.keys()].sort().reverse()) {
-    yield `\n<details><summary>${year}</summary>\n\n### ${year}\n`;
+    yield `<details><summary>${year}</summary>\n\n### ${year}`;
 
     for (const month of (byYear.get(year) ?? []).sort().reverse()) {
-      yield `\n<details><summary>${month}</summary>\n\n#### ${month}\n\n`;
+      yield `<details><summary>${month}</summary>\n\n#### ${month}`;
 
       for (const [i, repo] of (byMonth.get(month) ?? []).entries())
         yield `${i + 1}. [${repo.name}](https://github.com/${repo.name})
@@ -303,26 +312,25 @@ export function* buildMarkdownSectionLines(entries: RepoStats[]): Generator<stri
     - pull_requests: ${repo.pull_requests}
     - reviewed_prs: ${repo.reviewed_prs}
     - review_comments: ${repo.review_comments}
-    - commits: ${repo.commits}
-`;
+    - commits: ${repo.commits}`;
 
-      yield `\n</details>\n`;
+      yield '</details>';
     }
 
-    yield `\n</details>\n`;
+    yield '</details>';
   }
 }
 
 export async function updateMarkdown(filePath: string, entries: RepoStats[]): Promise<void> {
-  let readme = await readFile(filePath, 'utf8');
-  const section = [...buildMarkdownSectionLines(entries)].join('');
+  let markdown = await readFile(filePath, 'utf8');
+  const section = [...buildMarkdownSectionLines(entries)].join('\n\n');
 
-  const index = readme.indexOf(README_HEADING);
-  readme =
+  const index = markdown.indexOf(MARKDOWN_HEADING);
+  markdown =
     index !== -1
-      ? readme.slice(0, index) + section
-      : readme.trimEnd() + '\n\n' + section;
+      ? markdown.slice(0, index) + section
+      : markdown.trimEnd() + '\n\n' + section;
 
-  await writeFile(filePath, readme);
+  await writeFile(filePath, markdown);
   console.log(`✅ Updated ${filePath}`);
 }
