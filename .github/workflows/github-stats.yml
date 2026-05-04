@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write # needed to commit github-stats.yml and README.md
+  pull-requests: write # needed by create-pull-request to open/update PRs
 
 jobs:
   collect-stats:
