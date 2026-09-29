@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: denoland/setup-deno@v2
         with:
@@ -57,7 +57,7 @@ jobs:
           LAST_MONTH=$(date -d "$(date +%Y-%m-01) -1 month" +%Y-%m)
           echo "LAST_MONTH=$LAST_MONTH" >> "$GITHUB_ENV"
 
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         if: github.event_name == 'schedule'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

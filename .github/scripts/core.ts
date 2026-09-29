@@ -1,10 +1,8 @@
 import { $, fs } from 'npm:zx';
 import { parse as parseYaml, stringify as stringifyYaml } from 'npm:yaml';
-import WebUtility from 'npm:web-utility';
+import { buildURLData } from 'npm:web-utility';
 
 import { gql, ghSearch, toISOTimestamp } from './utility.ts';
-
-const { buildURLData } = WebUtility;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

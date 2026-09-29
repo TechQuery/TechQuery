@@ -1,7 +1,5 @@
 import { $, path, fs } from 'npm:zx';
-import WebUtility from 'npm:web-utility';
-
-const { Second, sleep } = WebUtility;
+import { Second, sleep } from 'npm:web-utility';
 
 /**
  * Returns an ISO-8601 timestamp for the start or end (`endOfDay=true`) of a date string.
@@ -21,9 +19,7 @@ export async function resolvePath(
   try {
     const stats = await fs.stat(absolutePath);
 
-    return stats.isDirectory()
-      ? path.join(absolutePath, file)
-      : absolutePath;
+    return stats.isDirectory() ? path.join(absolutePath, file) : absolutePath;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return absolutePath;
 
