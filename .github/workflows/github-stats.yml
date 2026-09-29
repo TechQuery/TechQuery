@@ -5,7 +5,7 @@ on:
   schedule:
     - cron: "0 0 1 * *"
 
-  # Allow manual triggering with explicit start/end dates (stdout only, no files written)
+  # Allow manual triggering with explicit start/end dates and optional file output
   workflow_dispatch:
     inputs:
       start_date:
@@ -15,6 +15,10 @@ on:
       end_date:
         description: "End date (YYYY-MM-DD)"
         required: true
+        type: string
+      output:
+        description: "Output YAML file (optional; leave blank for stdout only)"
+        required: false
         type: string
 
 permissions:
@@ -32,14 +36,17 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Collect contribution stats (manual – stdout only)
+      - name: Collect contribution stats (manual)
         if: github.event_name == 'workflow_dispatch'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUTPUT_FILE: ${{ inputs.output }}
         run: |
           deno run --allow-all .github/scripts/collect-stats.ts \
+            --login="${{ github.repository_owner }}" \
             --start-date="${{ inputs.start_date }}" \
-            --end-date="${{ inputs.end_date }}"
+            --end-date="${{ inputs.end_date }}" \
+            --output="$OUTPUT_FILE"
 
       - name: Collect contribution stats (scheduled – write files)
         if: github.event_name == 'schedule'
@@ -50,6 +57,7 @@ jobs:
           END_DATE=$(date -d "$(date +%Y-%m-01) -1 day" +%Y-%m-%d)
 
           deno run --allow-all .github/scripts/collect-stats.ts \
+            --login="${{ github.repository_owner }}" \
             --start-date="$START_DATE" \
             --end-date="$END_DATE" \
             --output=github-stats.yml

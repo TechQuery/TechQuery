@@ -3,12 +3,13 @@
 /**
  * GitHub Contribution Stats Collector
  *
- * Finds public repos created by the authenticated user and their organisations
+ * Finds public repos created by the selected user and their organisations
  * during a date range, then counts their issues, discussions, pull requests,
  * reviewed PRs, review comments and main-branch commits in those repos.
  * Only repos where at least one stat is non-zero are kept.
  *
  * CLI arguments
+ *   --login       GitHub user login (required)
  *   --start-date  YYYY-MM-DD  Start of range (required)
  *   --end-date    YYYY-MM-DD  End of range   (required)
  *   --output      path        YAML stats file to write; omit for stdout-only mode
@@ -56,12 +57,13 @@ const MARKDOWN_FILE = path.join(ROOT, 'README.md');
 
 const startArg = argv['start-date'] as string | undefined;
 const endArg = argv['end-date'] as string | undefined;
+const loginArg = argv.login as string | undefined;
 const outputArg = argv.output as string | undefined;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface ViewerData {
-  viewer: {
+interface UserData {
+  user: {
     login: string;
     organizations: { nodes: { login: string }[] };
   };
@@ -69,18 +71,26 @@ interface ViewerData {
 
 // ── Main (top-level await) ────────────────────────────────────────────────────
 
-if (!startArg || !endArg)
-  throw new ReferenceError('Error: --start-date and --end-date are required');
+if (!loginArg || !startArg || !endArg)
+  throw new ReferenceError(
+    'Error: --login, --start-date and --end-date are required',
+  );
 
 console.log(`📅 Date range: ${startArg} → ${endArg}`);
 
-// 1. Authenticated user + organisations
-const { viewer } = await gql<ViewerData>(
-  `{ viewer { login organizations(first: 100) { nodes { login } } } }`,
+// 1. Selected user + organisations
+const { user } = await gql<UserData>(
+  `query($login: String!) {
+    user(login: $login) {
+      login
+      organizations(first: 100) { nodes { login } }
+    }
+  }`,
+  ['-f', `login=${loginArg}`],
 );
 
-const { login } = viewer;
-const orgs = (viewer.organizations?.nodes ?? []).map((o) => o.login);
+const { login } = user;
+const orgs = (user.organizations?.nodes ?? []).map((o) => o.login);
 
 console.log(`👤 User: ${login}`);
 if (orgs.length) console.log(`🏢 Orgs: ${orgs.join(', ')}`);
@@ -215,18 +225,19 @@ console.log('\n📊 Results:');
 for (const entry of newEntries) console.table(entry);
 
 // 5. Persist only when an output file was specified
-if (outputArg) {
-  const statsFile = await resolvePath(ROOT, outputArg, 'github-stats.yml');
-
-  // Load existing data, remove any existing entries for the same repos, then append
-  const existing = await loadStats(statsFile);
-  const filtered = existing.filter(
-    (e) => !newEntries.some((n) => n.name === e.name),
-  );
-  const updated = [...filtered, ...newEntries];
-
-  await saveStats(statsFile, updated);
-  await updateMarkdown(MARKDOWN_FILE, updated);
-} else {
+if (!outputArg) {
   console.log('\nℹ️  No --output specified — no files written.');
+  process.exit(0);
 }
+
+const statsFile = await resolvePath(ROOT, outputArg, 'github-stats.yml');
+
+// Load existing data, remove any existing entries for the same repos, then append
+const existing = await loadStats(statsFile);
+const filtered = existing.filter(
+  (e) => !newEntries.some((n) => n.name === e.name),
+);
+const updated = [...filtered, ...newEntries];
+
+await saveStats(statsFile, updated);
+await updateMarkdown(MARKDOWN_FILE, updated);
