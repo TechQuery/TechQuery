@@ -42,6 +42,28 @@
 
 ### 2026
 
+<details><summary>2026-07</summary>
+
+#### 2026-07
+
+1. [Open-Source-Bazaar/contributor-trust-action](https://github.com/Open-Source-Bazaar/contributor-trust-action)
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - reviewed_prs: 1
+    - review_comments: 15
+    - commits: 1
+
+2. [Open-Source-Bazaar/Wiki](https://github.com/Open-Source-Bazaar/Wiki)
+    - issues: 1
+    - discussions: 0
+    - pull_requests: 1
+    - reviewed_prs: 1
+    - review_comments: 0
+    - commits: 1
+
+</details>
+
 <details><summary>2026-03</summary>
 
 #### 2026-03
