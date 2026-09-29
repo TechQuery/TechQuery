@@ -40,13 +40,18 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          START_DATE: ${{ inputs.start_date }}
+          END_DATE: ${{ inputs.end_date }}
           OUTPUT_FILE: ${{ inputs.output }}
         run: |
           deno run --allow-all .github/scripts/collect-stats.ts \
             --login="${{ github.repository_owner }}" \
-            --start-date="${{ inputs.start_date }}" \
-            --end-date="${{ inputs.end_date }}" \
+            --start-date="$START_DATE" \
+            --end-date="$END_DATE" \
             --output="$OUTPUT_FILE"
+
+          LAST_MONTH=$(date -d "$START_DATE" +%Y-%m)
+          echo "LAST_MONTH=$LAST_MONTH" >> "$GITHUB_ENV"
 
       - name: Collect contribution stats (scheduled – write files)
         if: github.event_name == 'schedule'
