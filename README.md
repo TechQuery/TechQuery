@@ -42,24 +42,63 @@
 
 ### 2026
 
+<details><summary>2026-09</summary>
+
+#### 2026-09
+
+1. [idea2app/npm2exe](https://github.com/idea2app/npm2exe)
+    - issues: 3
+    - discussions: 0
+    - pull_requests: 3
+    - reviewed_prs: 3
+    - review_comments: 71
+    - commits: 2
+
+
+2. [idea2app/Parcel-transformer-Vue-TSX](https://github.com/idea2app/Parcel-transformer-Vue-TSX)
+    - issues: 3
+    - discussions: 0
+    - pull_requests: 3
+    - reviewed_prs: 1
+    - review_comments: 8
+    - commits: 3
+
+3. [idea2app/Taro-Shadcn-MobX-ts](https://github.com/idea2app/Taro-Shadcn-MobX-ts)
+    - issues: 3
+    - discussions: 0
+    - pull_requests: 3
+    - reviewed_prs: 1
+    - review_comments: 8
+    - commits: 3
+
+4. [Open-Source-Bazaar/CityPet-service](https://github.com/Open-Source-Bazaar/CityPet-service)
+    - issues: 1
+    - discussions: 0
+    - pull_requests: 1
+    - reviewed_prs: 0
+    - review_comments: 0
+    - commits: 3
+
+</details>
+
 <details><summary>2026-07</summary>
 
 #### 2026-07
 
-1. [Open-Source-Bazaar/contributor-trust-action](https://github.com/Open-Source-Bazaar/contributor-trust-action)
-    - issues: 0
-    - discussions: 0
-    - pull_requests: 0
-    - reviewed_prs: 1
-    - review_comments: 15
-    - commits: 1
-
-2. [Open-Source-Bazaar/Wiki](https://github.com/Open-Source-Bazaar/Wiki)
+1. [Open-Source-Bazaar/Wiki](https://github.com/Open-Source-Bazaar/Wiki)
     - issues: 1
     - discussions: 0
     - pull_requests: 1
     - reviewed_prs: 1
     - review_comments: 0
+    - commits: 1
+
+2. [Open-Source-Bazaar/contributor-trust-action](https://github.com/Open-Source-Bazaar/contributor-trust-action)
+    - issues: 0
+    - discussions: 0
+    - pull_requests: 0
+    - reviewed_prs: 1
+    - review_comments: 15
     - commits: 1
 
 </details>
