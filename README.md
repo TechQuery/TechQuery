@@ -54,15 +54,8 @@
     - review_comments: 71
     - commits: 2
 
-2. [idea2app/npm2exe](https://github.com/idea2app/npm2exe)
-    - issues: 3
-    - discussions: 0
-    - pull_requests: 3
-    - reviewed_prs: 3
-    - review_comments: 71
-    - commits: 2
 
-3. [idea2app/Parcel-transformer-Vue-TSX](https://github.com/idea2app/Parcel-transformer-Vue-TSX)
+2. [idea2app/Parcel-transformer-Vue-TSX](https://github.com/idea2app/Parcel-transformer-Vue-TSX)
     - issues: 3
     - discussions: 0
     - pull_requests: 3
@@ -70,7 +63,7 @@
     - review_comments: 8
     - commits: 3
 
-4. [idea2app/Taro-Shadcn-MobX-ts](https://github.com/idea2app/Taro-Shadcn-MobX-ts)
+3. [idea2app/Taro-Shadcn-MobX-ts](https://github.com/idea2app/Taro-Shadcn-MobX-ts)
     - issues: 3
     - discussions: 0
     - pull_requests: 3
@@ -78,7 +71,7 @@
     - review_comments: 8
     - commits: 3
 
-5. [Open-Source-Bazaar/CityPet-service](https://github.com/Open-Source-Bazaar/CityPet-service)
+4. [Open-Source-Bazaar/CityPet-service](https://github.com/Open-Source-Bazaar/CityPet-service)
     - issues: 1
     - discussions: 0
     - pull_requests: 1
