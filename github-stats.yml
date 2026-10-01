@@ -150,3 +150,43 @@
   reviewed_prs: 1
   review_comments: 15
   commits: 1
+- createdAt: 2026-09-03T22:26:59Z
+  name: idea2app/Taro-Shadcn-MobX-ts
+  issues: 3
+  discussions: 0
+  pull_requests: 3
+  reviewed_prs: 1
+  review_comments: 8
+  commits: 3
+- createdAt: 2026-09-13T23:55:35Z
+  name: Open-Source-Bazaar/CityPet-service
+  issues: 1
+  discussions: 0
+  pull_requests: 1
+  reviewed_prs: 0
+  review_comments: 0
+  commits: 3
+- createdAt: 2026-09-20T23:36:07Z
+  name: idea2app/Parcel-transformer-Vue-TSX
+  issues: 3
+  discussions: 0
+  pull_requests: 3
+  reviewed_prs: 1
+  review_comments: 8
+  commits: 3
+- createdAt: 2026-09-25T06:28:39Z
+  name: idea2app/npm2exe
+  issues: 3
+  discussions: 0
+  pull_requests: 3
+  reviewed_prs: 3
+  review_comments: 71
+  commits: 2
+- createdAt: 2026-09-25T06:28:39Z
+  name: idea2app/npm2exe
+  issues: 3
+  discussions: 0
+  pull_requests: 3
+  reviewed_prs: 3
+  review_comments: 71
+  commits: 2
